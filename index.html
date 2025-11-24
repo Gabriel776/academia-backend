@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OrionDesk — Saúde & Performance</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <div class="logo-wrap">
+        <svg width="44" height="44" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="100" height="100" fill="none"/>
+          <g transform="translate(10,10)">
+            <circle cx="10" cy="10" r="3" fill="#00E5FF"/>
+            <circle cx="30" cy="30" r="3" fill="#00E5FF"/>
+            <circle cx="50" cy="10" r="3" fill="#00E5FF"/>
+            <path d="M10 10 L30 30 L50 10" stroke="#00E5FF" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+        </svg>
+      </div>
+      <div class="brand-text"><span class="name">OrionDesk</span><span class="fa">F.A</span></div>
+    </div>
+    <nav class="nav">
+      <a href="#home">Home</a>
+      <a href="#calories">Calorias</a>
+      <a href="#exercises">Exercícios</a>
+      <a href="#premium">Premium</a>
+      <a href="#" id="btn-login">Login</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section id="home" class="hero card">
+      <h1>OrionDesk</h1>
+      <p class="lead">Performance. Força. Controle. — Treinos, nutrição e planos para resultados reais.</p>
+      <div class="actions">
+        <button class="btn primary" id="get-started">Começar</button>
+        <button class="btn ghost" id="see-premium">Ver Premium</button>
+      </div>
+    </section>
+
+    <section id="calories" class="card">
+      <h2>Calculadora de Calorias</h2>
+      <form id="calorie-form" class="form-grid">
+        <select id="sex"><option value="male">Masculino</option><option value="female">Feminino</option></select>
+        <input id="weight" type="number" placeholder="Peso (kg)" value="80" />
+        <input id="height" type="number" placeholder="Altura (cm)" value="170" />
+        <input id="age" type="number" placeholder="Idade" value="30" />
+        <select id="activity">
+          <option value="sedentary">Sedentário</option>
+          <option value="light">Leve</option>
+          <option value="moderate" selected>Moderado</option>
+          <option value="very">Muito</option>
+        </select>
+        <button class="btn primary" type="submit">Calcular</button>
+      </form>
+      <div id="calorie-result" class="result"></div>
+    </section>
+
+    <section id="exercises" class="card">
+      <h2>Exercícios</h2>
+      <div id="ex-list">Carregando exercícios...</div>
+      <div class="note">Você pode adicionar exercícios no app (API).</div>
+    </section>
+
+    <section id="premium" class="card">
+      <h2>Plano Premium</h2>
+      <p>Conteúdos exclusivos: treinos, dietas e suporte.</p>
+      <form id="premium-form">
+        <input id="premium-email" placeholder="Seu e‑mail" />
+        <button class="btn primary" type="submit">Assinar R$29,90 (PIX)</button>
+      </form>
+      <div id="premium-result"></div>
+    </section>
+
+    <footer class="footer card">
+      <div>© 2025 OrionDesk — F.A</div>
+      <div class="small">Feito para transformar performance.</div>
+    </footer>
+  </main>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-content card">
+      <h3>Login</h3>
+      <form id="login-form" class="form-grid">
+        <input id="login-email" placeholder="Email" type="email" required />
+        <input id="login-password" placeholder="Senha" type="password" required />
+        <div class="modal-actions">
+          <button class="btn primary" type="submit">Entrar</button>
+          <button class="btn ghost" type="button" id="close-modal">Fechar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+  const API = "https://academia-backend-1-5702.onrender.com";
+  document.getElementById('btn-login').addEventListener('click', ()=> document.getElementById('modal').classList.remove('hidden'));
+  document.getElementById('close-modal').addEventListener('click', ()=> document.getElementById('modal').classList.add('hidden'));
+  document.getElementById('get-started').addEventListener('click', ()=> location.href = '#calories');
+  document.getElementById('see-premium').addEventListener('click', ()=> location.href = '#premium');
+  document.getElementById('login-form').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    try{
+      const res = await fetch(API + '/auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password})});
+      const data = await res.json();
+      if(res.ok){ localStorage.setItem('token', data.token); alert('Logado'); document.getElementById('modal').classList.add('hidden'); }
+      else alert(data.error || 'Erro no login');
+    }catch(err){ alert('Erro de conexão'); }
+  });
+  document.getElementById('calorie-form').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const sex = document.getElementById('sex').value;
+    const weight = Number(document.getElementById('weight').value);
+    const height = Number(document.getElementById('height').value);
+    const age = Number(document.getElementById('age').value);
+    const activity = document.getElementById('activity').value;
+    let bmr = (10*weight) + (6.25*height) - (5*age) + (sex==='male'?5:-161);
+    let mult = activity==='sedentary'?1.2:activity==='light'?1.375:activity==='moderate'?1.55:1.725;
+    const tdee = Math.round(bmr * mult);
+    document.getElementById('calorie-result').innerHTML = `<strong>TDEE:</strong> ${tdee} kcal/dia`;
+  });
+  async function loadExercises(){
+    try{
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch(API + '/exercises', {headers: { Authorization: 'Bearer ' + token }});
+      const data = await res.json();
+      if(Array.isArray(data)){
+        const html = data.map(x=>`<div class="ex"><h4>${x.name}</h4><p>${x.description||''}</p></div>`).join('');
+        document.getElementById('ex-list').innerHTML = html || '<p>Nenhum exercício.</p>';
+      } else { document.getElementById('ex-list').innerText = 'Erro ao carregar.' }
+    }catch(e){ document.getElementById('ex-list').innerText = 'Erro ao carregar.' }
+  }
+  loadExercises();
+  document.getElementById('premium-form').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email = document.getElementById('premium-email').value || localStorage.getItem('user_email') || 'cliente@example.com';
+    try{
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch(API + '/payments/create_preference', {
+        method:'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ amount:29.9, description: 'Plano Premium', email })
+      });
+      const data = await res.json();
+      if(data.init_point) { window.open(data.init_point); document.getElementById('premium-result').innerText = 'Abrindo checkout...'; }
+      else document.getElementById('premium-result').innerText = JSON.stringify(data);
+    }catch(err){ document.getElementById('premium-result').innerText = 'Erro no pagamento.' }
+  });
+  </script>
+</body>
+</html>
