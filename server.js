@@ -10,7 +10,7 @@ app.get("/", (req, res) => {
   res.send({ message: "Backend da academia funcionando!" });
 });
 
-// Substitua essa porta depois no Render, não mexa aqui
+// Porta do servidor (Render usa process.env.PORT)
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
