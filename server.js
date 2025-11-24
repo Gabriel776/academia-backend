@@ -1,52 +1,54 @@
 const express = require("express");
 const cors = require("cors");
-const mercadopago = require("mercadopago");
+const fetch = require("node-fetch");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// CONFIGURAÇÃO DO MERCADO PAGO
-mercadopago.configure({
-    access_token: "APP_USR-dada39f4-c765-4277-bd9c-f1d66ac0727b"
-});
+// 🔧 MERCADO PAGO - ACCESS TOKEN CORRETO
+const ACCESS_TOKEN = "APP_USR-4179960091459463-112413-2c9a342c22b476dbbbec9d2c4e3f9621";
 
-// TESTE PARA VER SE A API ESTÁ ONLINE
+// ✔ ROTA PARA TESTAR SE A API ESTÁ ONLINE
 app.get("/", (req, res) => {
-    res.send("API funcionando!");
+  res.send("API funcionando!");
 });
 
-// ROTA DE PAGAMENTO
+// ✔ ROTA PARA GERAR PIX
 app.post("/pagar", async (req, res) => {
-    try {
-        const { title, price } = req.body;
+  try {
+    const { nome, email, valor } = req.body;
 
-        const preference = {
-            items: [
-                {
-                    title: title,
-                    quantity: 1,
-                    currency_id: "BRL",
-                    unit_price: Number(price)
-                }
-            ]
-        };
+    const response = await fetch("https://api.mercadopago.com/v1/payments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${ACCESS_TOKEN}`
+      },
+      body: JSON.stringify({
+        payer: {
+          email: email,
+          first_name: nome
+        },
+        transaction_amount: Number(valor),
+        description: "Pagamento Academia",
+        payment_method_id: "pix"
+      })
+    });
 
-        const response = await mercadopago.preferences.create(preference);
-        return res.json({
-            id: response.body.id,
-            init_point: response.body.init_point
-        });
+    const data = await response.json();
+    res.json(data);
 
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ error: "Erro ao criar pagamento" });
-    }
+  } catch (error) {
+    res.status(500).json({
+      erro: "Erro ao gerar PIX",
+      detalhe: error.message
+    });
+  }
 });
 
-// PORTA PARA O RENDER
+// Porta para o Render
 const port = process.env.PORT || 3000;
-
 app.listen(port, () => {
-    console.log("Servidor rodando na porta " + port);
+  console.log("Servidor rodando na porta " + port);
 });
