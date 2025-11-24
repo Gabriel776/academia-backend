@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: academia-backend
+    env: node
+    region: ohio
+    buildCommand: "npm install"
+    startCommand: "npm start"
+    plan: free
+    branch: main
+    rootDir: api
