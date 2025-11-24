@@ -7,7 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 // 🔧 MERCADO PAGO - ACCESS TOKEN CORRETO
-const ACCESS_TOKEN = "APP_USR-4179960091459463-112413-2c9a342c22b476dbbbec9d2c4e3f9621";
+const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
 
 // ✔ ROTA PARA TESTAR SE A API ESTÁ ONLINE
 app.get("/", (req, res) => {
